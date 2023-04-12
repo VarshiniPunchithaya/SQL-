@@ -1,0 +1,39 @@
+create database hospitalDB;
+
+create table hospital(PNo int primary key,name varchar(20),age int,dept varchar(15),dateofadm date,charges numeric,sex char(1));
+
+1.
+insert into hospital values(1,'Arprit',62,'Surgery','1998-01-12',300,'M');
+insert into hospital values(2,'Zarina',22,'ENT','1997-12-12',250,'F');
+insert into hospital values(3,'Kareem',32,'Orthopedic','1998-02-19',200,'M');
+insert into hospital values(4,'Arun',12,'Surgery','1998-01-11',300,'M');
+insert into hospital values(5,'Zubin',30,'ENT','1998-01-12',250,'M');
+insert into hospital values(6,'Ketaki',6,'ENT','1998-02-24',250,'F');
+insert into hospital values(7,'Ankita',29,'Cardiology','1998-02-20',800,'F');
+insert into hospital values(8,'Zareen',45,'Gynaecologist','1998-02-22',300,'F');
+insert into hospital values(9,'Kush',9,'Cardiology','1998-01-13',800,'M');
+insert into hospital values(10,'Shilpa',23,'Nuclear Medicine','1998-01-20',400,'F');	
+
+2.exec sp_help hospital;
+
+3.select name,'of age',age,'got admitted on',dateofadm from hospital_data;
+
+4.alter table hospital add address char(20);
+
+5.alter table hospital alter column address char(25);
+
+6.alter table hospital alter column address varchar(25);
+
+7.exec sp_rename 'hospital.address','homeaddress','COLUMN';
+
+8.alter table hospital drop column homeaddress;
+
+9.exec sp_rename 'hospital','hospital_data';
+
+10.update hospital set age=30 where pno =7;
+
+11.delete from hospital_data;
+
+12.drop table hospital_data;
+
+
