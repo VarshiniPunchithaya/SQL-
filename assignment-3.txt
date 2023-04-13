@@ -1,0 +1,66 @@
+Question 1.
+
+create table location(locid int primary key,locname varchar(20));
+
+locid	int	no	4	10   	0    	no	(n/a)	(n/a)	NULL
+locname	varchar	no	20	     	     	yes	no	yes	SQL_Latin1_General_CP1_CI_AS
+
+PRIMARY KEY (clustered)	PK__location__79309323CD6BB82D	(n/a)	(n/a)	(n/a)	(n/a)	locid
+
+
+
+create table department(deptid int primary key, deptname varchar(20),mgr int,deptloc int foreign key references location(locid));
+
+deptid	int	no	4	10   	0    	no	(n/a)	(n/a)	NULL
+deptname	varchar	no	20	     	     	yes	no	yes	SQL_Latin1_General_CP1_CI_AS
+mgr	int	no	4	10   	0    	yes	(n/a)	(n/a)	NULL
+deptloc	int	no	4	10   	0    	yes	(n/a)	(n/a)	NULL
+
+FOREIGN KEY	FK__departmen__deptl__3B75D760	No Action	No Action	Enabled	Is_For_Replication	deptloc
+ 	 	 	 	 	 	REFERENCES employeeDB.dbo.location (locid)
+PRIMARY KEY (clustered)	PK__departme__BE2C1AEEB19E93FC	(n/a)	(n/a)	(n/a)	(n/a)	deptid
+
+
+
+
+create table employee(eid int primary key, ename varchar(20),role varchar(20),mgr int,deptid int foreign key references department(deptid),sal numeric,locid int foreign key references location(locid));
+
+eid	int	no	4	10   	0    	no	(n/a)	(n/a)	NULL
+ename	varchar	no	20	     	     	yes	no	yes	SQL_Latin1_General_CP1_CI_AS
+role	varchar	no	20	     	     	yes	no	yes	SQL_Latin1_General_CP1_CI_AS
+mgr	int	no	4	10   	0    	yes	(n/a)	(n/a)	NULL
+deptid	int	no	4	10   	0    	yes	(n/a)	(n/a)	NULL
+sal	numeric	no	9	18   	0    	yes	(n/a)	(n/a)	NULL
+locid	int	no	4	10   	0    	yes	(n/a)	(n/a)	NULL
+
+FOREIGN KEY	FK__employee__deptid__3E52440B	No Action	No Action	Enabled	Is_For_Replication	deptid
+ 	 	 	 	 	 	REFERENCES employeeDB.dbo.department (deptid)
+FOREIGN KEY	FK__employee__locid__3F466844	No Action	No Action	Enabled	Is_For_Replication	locid
+ 	 	 	 	 	 	REFERENCES employeeDB.dbo.location (locid)
+PRIMARY KEY (clustered)	PK__employee__D9509F6DC5CA668E	(n/a)	(n/a)	(n/a)	(n/a)	eid
+
+
+
+
+Question 2.
+
+create table parent(pin int primary key, father_name varchar(20),mother_name varchar(20),contact_number varchar(10));
+
+pin	int	no	4	10   	0    	no	(n/a)	(n/a)	NULL
+father_name	varchar	no	20	     	     	yes	no	yes	SQL_Latin1_General_CP1_CI_AS
+mother_name	varchar	no	20	     	     	yes	no	yes	SQL_Latin1_General_CP1_CI_AS
+contact_number	varchar	no	10	     	     	yes	no	yes	SQL_Latin1_General_CP1_CI_AS
+
+PRIMARY KEY (clustered)	PK__parent__DD37D92CAE76E9CD	(n/a)	(n/a)	(n/a)	(n/a)	pin
+
+
+
+create table child(fname varchar(15),lname varchar(10),address varchar(25),pin int foreign key references parent(pin) on delete cascade);
+
+fname	varchar	no	15	     	     	yes	no	yes	SQL_Latin1_General_CP1_CI_AS
+lname	varchar	no	10	     	     	yes	no	yes	SQL_Latin1_General_CP1_CI_AS
+address	varchar	no	25	     	     	yes	no	yes	SQL_Latin1_General_CP1_CI_AS
+pin	int	no	4	10   	0    	yes	(n/a)	(n/a)	NULL
+
+FOREIGN KEY	FK__child__pin__440B1D61	Cascade	No Action	Enabled	Is_For_Replication	pin
+ 	 	 	 	 	 	REFERENCES employeeDB.dbo.parent (pin)
