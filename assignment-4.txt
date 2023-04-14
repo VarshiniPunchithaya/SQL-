@@ -1,0 +1,7 @@
+a.select * from garment where ready between '09-12-08' and '10-06-16';
+
+b.select garment.fcode,max(garment.price),min(garment.price) from garment, fabric group by garment.fcode;
+
+c.select gcode, descr, fabric.type, fabric.fcode from  garment, fabric where garment.fcode=fabric.fcode;
+
+d.select garment.* from garment, fabric where fabric.fcode=garment.fcode and fabric.type='Cotton';

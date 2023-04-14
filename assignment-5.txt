@@ -1,0 +1,3 @@
+1. select city.name from city , country where country.continent='Africa' and city.countrycode=country.code;
+2.select sum(city.population) from city, country where country.continent='Asia' and city.countrycode=country.code;
+3.select country.continent,floor(avg(city.population)) from country INNER JOIN city ON country.code = city.countrycode group by country.continent;
