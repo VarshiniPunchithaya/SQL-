@@ -23,7 +23,7 @@
 22.select member_id,member_name,date_register from lms_members where member_id not in (select member_id from lms_book_issue);
 23.select  rack_num,count(*) as 'NO_OF_BOOKS' from lms_book_details group by rack_num order by rack_num;
 24.select bi.book_issue_no,member_name,date_register,date_expire,book_title,category,author,price,date_issue,date_return,date_returned,'issued'as 'issue_status',fine_amount from lms_members as lm join lms_book_issue as bi on lm.member_id=bi.member_id join lms_book_details as bd on bi.book_code=bd.book_code join lms_fine_details as fd on bi.fine_range=fd.fine_range;
-25.select member_id,count(*) from lms_book_issue group by member_id;
+25.select lm.member_id,member_name,3-COUNT(lm.member_id) from lms_book_issue lm,lms_members m WHERE m.member_id=lm.member_id group by lm.member_id,m.member_name;
 26.select TOP 3 * from lms_suppliers_details;
 27.select * from lms_suppliers_details except (select top 3 * from lms_suppliers_details) ;
 28.exec sp_rename 'lms_members','lms_member_details';
