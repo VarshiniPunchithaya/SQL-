@@ -1,0 +1,48 @@
+1.select o.* from orders o, salesman s where s.salesman_id=o.salesman_id and name='Paul Adam';
+
+2.select o.* from orders o,salesman s where o.salesman_id=s.salesman_id and s.city='London';
+
+3.select o.* from orders o where saleman_id in ( select salesman_id from orders where customer_id=3004);
+4.select order_no from orders where purchase_amount> ( select avg(purchase_amount) from orders group by order_date having order_date='2012-10-10');
+
+5.select orders.* from orders, customer where city='Paris' and orders.customer_id=customer.customer_id;
+
+6.select name,commissiion from salesman,customer where customer.city='New York' and customer.salesman_id=salesman.salesman_id;
+
+7.select grade,count(*) from customer where grade>( select avg(grade) from customer where city='New York') group by grade ;
+
+8.select order_no,purchase_amount,order_date,o.salesman_id from orders o, salesman s where s.salesman_id=o.salesman_id and commissiion=(select max(commissiion) from salesman);
+
+9.select c.* from customer c,orders o where c.customer_id=o.customer_id and order_date='2012-08-17';
+
+10.select s.salesman_id,name from salesman s, customer c where s.salesman_id=c.salesman_id and c.salesman_id in (select salesman_id from customer group by salesman_id having count(*) >1);
+
+11.select order_no,purchase_amount,order_date,customer_id,salesman_id from orders where purchase_amount> (select avg(purchase_amount) from orders);
+
+12.select sum(purchase_amount) as amount from orders group by order_date having sum(purchase_amount)> 1000.00 order by order_date;
+
+13.select * from customer where exists ( select * from customer where city='London');
+
+14. select salesman.* from salesman where salesman_id in( select salesman_id from customer group by customer.salesman_id having count(*)>1);
+
+15.select s.* from salesman s , customer c where s.salesman_id=c.salesman_id and s.city=c.city;
+
+16.select s.* from salesman s , customer c where s.city=c.city;
+
+17.select s.* from salesman s,customer c where  s.salesman_id=c.salesman_id and name < customer_name ;
+
+18. select customer_id,customer_name,city,grade,salesman_id from customer where grade> ANY(select grdae from customer where city<'New York');
+
+19.select * from orders where purchase_amount> any (select purchase_amount from orders where order_date='2012-09-10');
+
+20.select * from orders where purchase_amount<any (select purchase_amount from customer c,orders o where o.customer_id=c.customer_id and city='London');
+
+21.select * from orders where purchase_amount<any (select max(purchase_amount) from customer c,orders o where o.customer_id=c.customer_id and city='London');
+
+22.select * from customer where grades > any(select grades from customer where city='New York');
+
+23.select * from customer where grade not in (select grade from customer where city='paris');
+
+24.select * from customer where grade not in (select grade from customer where city='dallas');
+
+25.select all name from salesman;
