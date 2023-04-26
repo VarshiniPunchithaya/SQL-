@@ -39,7 +39,7 @@
 
 21.select * from orders where purchase_amount<any (select max(purchase_amount) from customer c,orders o where o.customer_id=c.customer_id and city='London');
 
-22.select * from customer where grades > any(select grades from customer where city='New York');
+22.select * from customer where grades > all(select grades from customer where city='New York');
 
 23.select * from customer where grade not in (select grade from customer where city='paris');
 
