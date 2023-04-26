@@ -2,31 +2,10 @@
 
 2)select salesman_id,name,city from salesman union select c.salesman_id,name,c.city from customer c, salesman s where s.salesman_id=c.salesman_id;
 
-4)SELECT O.SALESMAN_ID,S.NAME,O.ORDER_NO,
-CASE
-WHEN O.PURCHASE_AMOUNT=(SELECT MAX(PURCHASE_AMOUNT)
-FROM ORDERS WHERE ORDER_DATE=O.ORDER_DATE)
-THEN 'HIGHEST ON'
-WHEN O.PURCHASE_AMOUNT = (SELECT MIN(PURCHASE_AMOUNT) 
-FROM ORDERS WHERE ORDER_DATE = O.ORDER_DATE)
-THEN 'LOWEST ON'
-ELSE 'MID'
-END AS 'HIGHEST/LOWEST',O.ORDER_DATE FROM ORDERS O
-JOIN salesman S ON O.SALESMAN_ID = S.SALESMAN_ID; 
+3)select salesman_id,customer_id from customer union select salesman_id,customer_id from orders;
 
-
-(OR)
-
-SELECT S.SALESMAN_ID,NAME,ORDER_NO,'HIGHEST ON',ORDER_DATE
-FROM SALESMAN S,ORDERS O 
-WHERE S.SALESMAN_ID=O.SALESMAN_ID AND PURCHASE_AMOUNT=(SELECT MAX(PURCHASE_AMOUNT)
-FROM ORDERS WHERE ORDER_DATE=O.ORDER_DATE)
-UNION
-SELECT S.SALESMAN_ID,NAME,ORDER_NO,'LOWEST ON',ORDER_DATE
-FROM SALESMAN S,ORDERS O 
-WHERE S.SALESMAN_ID=O.SALESMAN_ID AND PURCHASE_AMOUNT=(SELECT MIN(PURCHASE_AMOUNT)
-FROM ORDERS WHERE ORDER_DATE=O.ORDER_DATE)
-
+4)select s.salesman_id,name,order_no,'Highest on',order_date from salesman s, orders o where s.salesman_id=o.salesman_id and purchase_amount in ( select max(purchase_amount) from orders od where o.order_date=od.order_date) union
+select s.salesman_id,name,order_no,'Lowest on',order_date from salesman s, orders o where s.salesman_id=o.salesman_id and purchase amount in(select min(purchase_amount) from orders od where o.order_date=od.order_date);
 
 5)select customer_id,city,grade case
 when grade >=300 then 'High Rating'
