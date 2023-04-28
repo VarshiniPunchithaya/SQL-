@@ -34,7 +34,7 @@
 
 18.select deptno,max(salary) as MaxSalary from employee group by deptno; 
 
-19.selet ename from employee where salary > (select 0.5 * SUM(salary) from employee where deptno = employee.deptno)
+19.select ename from employee where salary > (select 0.5 * SUM(salary) from employee where deptno = employee.deptno)
 
 20.select ename,hiredate from employee where hiredate>(select hiredate from employee where empno=8566);
 
