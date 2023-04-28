@@ -1,0 +1,40 @@
+1.select ename from employee where salary >( select salary from employee where empno=8844);
+
+2.select ename,deptno,job from employee where job in (select job from employee where empno=8900);
+
+3.select ename,deptno from employee where salary in (select min(salary) from employee);
+
+4.select empno,ename,deptno from employee where salary >(select avg(salary) from employee);
+
+5.select ename,empno,salary from employee where manager=8566;
+
+6.select e.deptno,ename,job,dname from employee as e join department as d on d.deptno=e.deptno where dname='Marketing';
+
+7.select * from employee as e join department as d on d.deptno=e.deptno where salary=5000 and manager=8566;
+
+8.select * from employee as e join department as d on d.deptno=e.deptno where empno in (8566,8884,8521);
+
+9.select * from employee as e join department as d on d.deptno=e.deptno where salary>=(select  min(salary) from employee)  and salary<2500;
+
+10.select * from employee where salary = (select max(salary) from employee where salary < (select max(salary) from employee));
+
+11.select ename from employee where salary>(select avg(salary) from employee) and deptno in(select deptno from employee where ename like 'M%');
+
+12.select ename,empno,job from employee where deptno in (select deptno from department where loc='Chennai');
+
+13.select empno,ename,job from employee where salary<(select min(salary) from employee where job='Analyst');
+
+14.select empno,ename,job from employee where salary<(select min(salary) from employee where job='Analyst') and job!='Analyst';
+
+15.select deptno,sum(salary) as total_salary from employee group by deptno;
+
+16.select empno,ename,salary,case when salary>(select avg(salary) from employee) then 'High' else 'Low' end as SalaryStatus from employee;
+
+17.select deptno,dname from department where deptno in (select distinct deptno from employee); 
+
+18.select deptno,max(salary) as MaxSalary from employee group by deptno; 
+
+19.selet ename from employee where salary > (select 0.5 * SUM(salary) from employee where deptno = employee.deptno)
+
+20.select ename,hiredate from employee where hiredate>(select hiredate from employee where empno=8566);
+
