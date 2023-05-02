@@ -1,0 +1,185 @@
+Scalar Function
+1.CREATE FUNCTION fn_CubeValue(@a int)
+returns int
+as 
+begin 
+ return @a*@a*@a;
+end
+select dbo.fn_CubeValue(10);
+
+
+2.
+CREATE FUNCTION CalculateTotal
+(@Price decimal(10,2),@Quantity int)
+RETURNS decimal(10,2)
+AS
+BEGIN
+   RETURN @Price * @Quantity
+END
+
+SELECT ProductName,Quantity,price, dbo.CalculateTotal(Price, Quantity) AS Total FROM Products
+
+3.
+CREATE FUNCTION OfferPrice
+(@Price decimal(10,2))
+RETURNS decimal(10,2)
+AS
+BEGIN
+   RETURN @Price * 0.5
+END
+
+select ProductName,Price,dbo.OfferPrice(Price) as OfferPrice from Products;
+
+
+4.
+CREATE FUNCTION OddorEven
+(@num int)
+RETURNS varchar(10)
+AS
+BEGIN
+declare @result varchar(10)
+If @num%2 =0
+    set @result='even'
+else
+   set @result= 'odd'
+return @result
+END
+select dbo.OddorEven(5)
+
+5.
+CREATE FUNCTION fn_radiantodegrees(@degree int)
+returns  decimal(10,2)
+as begin
+declare @radians decimal(10,2)
+ set @radians =DEGREES(@degree)
+ return @radians
+end
+select dbo.fn_radiantodegrees(100);
+
+6.
+CREATE FUNCTION fn_GetCurrentDate()
+RETURNS DATE
+AS
+BEGIN
+    RETURN GETDATE();
+END
+select dbo.fn_GetCurrentDate();
+
+7.
+CREATE FUNCTION ConvertToLowercase (@inputString VARCHAR(MAX))
+RETURNS VARCHAR(MAX)
+AS
+BEGIN
+    RETURN LOWER(@inputString)
+END
+select dbo.ConvertToLowercase('PROGRAD')
+
+
+8.
+create function CountWordsInString (@inputString VARCHAR(MAX))
+returns int as begin
+    declare @wordCount INT = 0;
+    select @wordCount = LEN(@inputString) - LEN(REPLACE(@inputString, ' ', '')) + 1;
+    return @wordCount;
+end
+select dbo.CountWordsInString('The training is for 7 weeks');
+Thetrainingisfor7weeks
+
+9.
+create function Experience(@dateofreg date)
+returns int
+as begin
+declare @exp int
+select @exp = DATEDIFF(year,@dateofreg,GetDate());
+return @exp;
+end
+select fname,lname,dbo.Experience(dateofreg) as Experience from employeetable;
+
+10.
+create function fn_FullName
+(@fname varchar(15),@lname varchar(15))
+returns varchar(40)
+as begin 
+declare @fullname varchar(40)
+select @fullname= concat (@fname,' ',@lname)
+return @fullname
+end
+
+select dbo.fn_FullName(fname,lname) as FullName from employeetable
+
+Inline Function
+
+1.
+create function fn_GetAll()
+returns table as
+return select * from employeetable;
+select * from fn_GetAll();
+
+2.
+create function fn_NoCommission()
+returns table as return
+(select * from employeetable where commission!=NULL)
+select * from fn_NoCommission();
+
+3.
+create function fn_BySalary(@salary int)
+returns table
+as return select * from employeetable where salary>@salary;
+select * from fn_BySalary(1000);
+
+4.
+create function fn_Mostemployees()
+returns table
+as return 
+(select top 2 e.dept,count(e.dept) as total_employess  from employeetable as e join dept as d on e.dept=d.deptid group by e.dept);
+
+select * from fn_Mostemployees();
+
+5.
+create function fn_WithLocation(@location varchar(15))
+returns table 
+as return (
+select e.* from employeetable as e join dept as d on e.dept=d.deptid where d.location=@location)
+select * from fn_WithLocation('Bangalore')
+
+6.
+create function fn_fullDetails()
+returns table
+as return 
+(
+select e.*,d.* from employeetable as e join dept as d on e.dept=d.deptid)
+
+select eid,fname,lname,job,manager,location,dept from fn_fullDetails()
+
+7.
+create table fn_GetEmployeesBySalaryAndDept(@dept int, @salary int)
+returns table
+as returns
+(
+    select eid,fname,lname, salary, dept
+    from employeetable
+    where dept = @dept AND salary > @salary
+)
+select * from fn_GetEmployeesBySalaryAndDept(30,1500);
+
+
+8.
+create function fn_orderbyname(@fname varchar(15))
+returns table as return
+(select eid,fname,lname,salary,dept from employeetable order by fname)
+
+9.
+create function fn_joining(@startdate date,@enddate date)
+returns table as return
+(select fname,lname from employeetable where year(dateofreg) between year(@startdate) and year(@enddate))
+
+select * from fn_joining('1990-01-01','1992-01-01');
+
+10.
+create function fn_NameLike(@lname varchar(15))
+returns table as return
+(select fname,lname from employeetable where lname=@lname)
+select * from fn_NameLike('Dsouza');
+
+task 2
+select * from fn_GetEmployeesBySalaryAndDept(30,1500) as f join dept as d on f.dept=d.deptid;
