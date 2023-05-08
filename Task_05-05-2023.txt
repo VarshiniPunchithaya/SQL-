@@ -1,0 +1,240 @@
+using no paramters
+
+  1.
+  CREATE PROCEDURE sp_get_managers
+  AS
+  BEGIN
+  SELECT DISTINCT manager FROM employeetable WHERE manager IS NOT NULL;
+  END
+
+  sp_get_managers
+
+  2.
+  CREATE PROCEDURE sp_employees_with_commission
+  AS
+  BEGIN
+  SELECT * FROM employeetable WHERE commission > 0;
+  END
+  sp_employees_with_commission
+
+  3.
+  CREATE PROCEDURE sp_employees_by_dept
+  AS
+  BEGIN
+  SELECT * FROM employeetable e, dept d where e.dept=d.deptid and location='Bangalore'
+  END
+  sp_employees_by_dept
+
+  4.
+  CREATE PROCEDURE sp_WithManagers
+  AS
+  BEGIN
+  SELECT * FROM employeetable where manager != null
+  END
+  sp_WithManagers
+
+  5.
+  CREATE PROCEDURE sp_more_than_two
+  AS
+  BEGIN
+  SELECT dept,count(*) FROM employeetable group by dept having count(*)>2
+  END
+
+  sp_more_than_two
+
+using inputparamters
+
+  6.
+  CREATE PROCEDURE get_employees_by_dept
+  @dept_id INT
+  AS
+  BEGIN
+  SELECT * FROM employeetable WHERE dept = @dept_id
+  END
+  get_employees_by_dept 20
+
+  7.
+  CREATE PROCEDURE get_employees_by_salary_range
+  @min_salary INT,
+  @max_salary INT
+  AS
+  BEGIN
+  SELECT * FROM employeetable WHERE salary BETWEEN @min_salary AND @max_salary
+  END
+  get_employees_by_salary_range 500,1500
+
+  8.
+  CREATE PROCEDURE add_employee
+  @eid int,
+  @fname VARCHAR(20),
+  @lname VARCHAR(20),
+  @job VARCHAR(20),
+  @manager INT,
+  @dateofreg DATE,
+  @salary INT,
+  @commission INT,
+  @dept INT
+  AS
+  BEGIN
+  INSERT INTO employeetable (eid,fname,lname,job, manager, dateofreg, salary, commission, dept)
+  VALUES (@eid,@fname,@lname,@job, @manager, @dateofreg, @salary, @commission, @dept)
+  END
+  add_employee 8000,'Shobha','Bhat','ANALYST',8566,'2001-01-01',5000,300,20
+ 
+ 9.
+  CREATE PROCEDURE  update_employee 
+  @job varchar(20)
+  AS
+  BEGIN
+  UPDATE employeetable SET job=@job WHERE job='CLERK'
+  END
+  update_employee 'clerical'
+
+  10.
+  CREATE PROCEDURE last_name
+  @lname varchar(20)
+  AS
+  BEGIN
+  SELECT fname,lname from employeetable where lname like @lname
+  END
+
+  last_name dsouza
+
+using  output paramters
+
+  11.
+  CREATE PROCEDURE get_max_salary
+  @max int OUTPUT
+  AS
+  BEGIN
+  SELECT @max = max(salary) FROM employeetable
+  END
+
+  declare @max int
+  exec get_max_salary @max output
+  select @max
+  12.
+  CREATE PROCEDURE number_of_managers
+  @count int output
+  AS 
+  BEGIN
+  SELECT @count=count(manager) FROM employeetable 
+  END
+
+  declare @count int 
+  exec number_of_managers @count   output
+  select @count 
+
+  13.
+  CREATE PROCEDURE sp_get_employee_count_by_department
+  @employee_count int OUTPUT
+  AS
+  BEGIN
+  SELECT @employee_count = COUNT(*) 
+  FROM employeetable e 
+  JOIN dept d ON e.dept = d.deptid 
+  WHERE d.location = 'CHENNAI';
+  END
+
+  declare @employee_count int
+  exec sp_get_employee_count_by_department @employee_count  output
+  select @employee_count
+
+  14.
+  CREATE PROCEDURE sp_undermanager
+  @employee_count int OUTPUT
+  AS
+  BEGIN
+  SELECT @employee_count = COUNT(*) 
+  FROM employeetable 
+  WHERE manager = 8566;
+  END
+
+  declare @employee_count int
+  exec sp_undermanager @employee_count  output
+  select @employee_count
+
+  15.
+  CREATE PROCEDURE sp_job
+  @employee_name varchar(20) output
+  AS BEGIN
+  SELECT @employee_name=concat(fname,' ',lname) from employeetable WHERE job='ANALYST';
+  END
+
+  declare @employee_name varchar(20)
+  exec sp_job @employee_name  output
+  select @employee_name
+
+using input/output paramters
+
+ 16.
+ CREATE PROCEDURE get_employee_details_and_location
+  @eid INT,
+  @name VARCHAR(20) OUTPUT,
+  @job VARCHAR(20) OUTPUT,
+  @salary INT OUTPUT,
+  @location VARCHAR(20) OUTPUT
+  AS
+  BEGIN
+  SELECT @name = concat(e.fname,' ',e.lname), @job = e.job, @salary = e.salary, @location = d.location 
+  FROM employeetable e 
+  JOIN dept d ON e.dept = d.deptid
+  WHERE e.eid = @eid
+  END
+
+  declare @ename VARCHAR(20) ,@ejob VARCHAR(20) , @esalary INT ,@elocation VARCHAR(20) 
+  exec get_employee_details_and_location 8566,@ename  output,@ejob  output,@esalary  output,@elocation  output
+  select @ename  ,@ejob  , @esalary  ,@elocation 
+
+ 17.
+ CREATE PROCEDURE update_employee_salary_and_commission
+  @eid INT,
+  @new_salary INT,
+  @new_commission INT OUTPUT
+  AS
+  BEGIN
+  UPDATE employeetable SET salary = @new_salary, commission = @new_commission WHERE eid = @eid
+  END
+  
+  declare @commission INT 
+  exec update_employee_salary_and_commission 8566,2985 ,@commission   output
+  select @commission 
+
+ 18.
+ CREATE PROCEDURE dept_on_count
+  @count int,
+  @department varchar(20) output
+  AS
+  BEGIN
+  SELECT @department=job from employeetable group by job having count(job)<@count
+  END
+
+  declare @edepartment varchar(20)
+  exec dept_on_count 2, @edepartment  output
+  select @edepartment 
+
+ 19.
+ CREATE PROCEDURE no_of_employees
+  @manager int,
+  @count int output
+  AS 
+  BEGIN
+  SELECT @count=count(*) FROM employeetable group by manager having manager=@manager
+  END
+
+  declare @ecount int 
+  exec no_of_employees 8566, @ecount output
+  select @ecount 
+
+ 20.
+ CREATE PROCEDURE salary_like
+  @salary int,
+  @name varchar(25) output
+  AS 
+  BEGIN
+  SELECT @name=concat(fname,' ',lname) FROM employeetable where salary=@salary 
+  END
+
+  declare @ename varchar(25) 
+  exec salary_like 1500, @ename output
+  select @ename 
