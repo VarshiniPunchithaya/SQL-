@@ -1,0 +1,63 @@
+create procedure spSellProduct
+  @ProductId int,
+  @QuantityToSell int as begin
+
+  declare @StockAvailable int
+  select @StockAvailable=QtyAvailbale from tblProduct where ProductId=@ProductId
+
+  if(@StockAvailable <@QuantityToSell)
+  begin 
+  RAISERROR('Not Enough StockAvailable',16,1);
+  end
+  else
+  begin
+  begin tran
+  update tblProduct set QtyAvailbale=(QtyAvailbale-@QuantityToSell) where ProductId=@ProductId;
+
+  declare @MaxProductSalesId int 
+  select @MaxProductSalesId= case when max(ProductSalesId) is null then 0
+  else max(ProductSalesId) end from tblProductSales
+
+  set @MaxProductSalesId =@MaxProductSalesId+1
+  insert into tblProductSales values(@MaxProductSalesId,@ProductId,@QuantityToSell);
+  commit tran
+  end
+  end
+
+
+
+  #using try catch
+
+
+  alter procedure spSellProduct
+  @ProductId int,
+  @QuantityToSell int as begin
+
+  declare @StockAvailable int
+  select @StockAvailable=QtyAvailbale from tblProduct where ProductId=@ProductId
+
+  if(@StockAvailable <@QuantityToSell)
+  begin
+  RAISERROR('Not Enough StockAvailable',16,1);
+  end
+
+  else
+  begin
+  begin try
+  begin tran
+
+  update tblProduct set QtyAvailbale=(QtyAvailbale-@QuantityToSell) where ProductId=@ProductId;
+
+  declare @MaxProductSalesId int 
+  select @MaxProductSalesId= case when max(ProductSalesId) is null then 0
+  else max(ProductSalesId) end from tblProductSales
+
+  set @MaxProductSalesId =@MaxProductSalesId+1
+  insert into tblProductSales values(@MaxProductSalesId,@ProductId,@QuantityToSell);
+  commit tran
+  end try 
+  begin catch
+  rollback tran
+  end catch
+  end
+  end
