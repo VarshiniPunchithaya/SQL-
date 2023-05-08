@@ -1,0 +1,123 @@
+1.
+  create function fn_employeemanagers
+  (@deptId int)
+  returns @employeetable table
+  (
+  eid int,fname varchar(20),lname varchar(20),manager int)
+  as begin 
+  insert into @employeetable
+  select eid,fname,lname,manager from employeetable where dept=@deptId
+  return end
+
+  select * from fn_employeemanagers(10)
+
+2.
+  create function fn_employeemanagername()
+  returns @employeetable table
+  (  eid int,employeename varchar(20),managername varchar(20),manager int)
+  as begin 
+  insert into @employeetable
+  select e.eid,concat(e.fname,' ',e.lname) as employeename,concat(e1.fname,' ',e1.lname) as managername,e1.manager from employeetable e,employeetable e1  where e.manager=e1.eid
+  return end
+  select * from fn_employeemanagername()
+
+3.
+  create function fn_undermanger
+  (@manager int)
+  returns @employeetable table
+  (manager int,employeename varchar(20),dept int)
+  as begin 
+  insert into @employeetable
+  select manager,concat(fname,' ',lname) as employeename,dept from employeetable where manager=@manager
+  return
+  end
+
+  select * from fn_undermanger(8698)
+
+4.
+  create function fn_employeeloction()
+  returns @employeetable table
+  (eid int,employeename varchar(40),location varchar(20))
+  as 
+  begin
+  insert into @employeetable
+  select eid,concat(fname,' ',lname) as employeename,location from employeetable e,dept d where e.dept=d.deptid
+  return
+  end
+
+  select * from fn_employeeloction()
+
+5.
+  create function fn_manager()
+  returns @employeetable table 
+  (manger int,location varchar(20))
+  as begin 
+  insert into @employeetable
+  select distinct(manager), d.location  from employeetable e ,dept d where e.dept=d.deptid 
+  return 
+  end
+
+  select * from fn_manager()
+
+6.
+  create function fn_employeedetail
+  (@eid int)
+  returns @employeetable table
+  (eid int,employeename varchar(25),dept int,manager int,location varchar(20))
+  as begin
+  insert into @employeetable
+  select eid,concat(fname,' ',lname) as employeename,e.dept,manager,location from employeetable e,dept d where e.dept=d.deptid and eid=@eid
+  return
+  end
+
+  select * from fn_employeedetail(8499)
+
+7.
+  create function fn_hireyear
+  (@year int)
+  returns @employeetable table
+  (eid int,employeename varchar(25),dateofreg date)
+  as begin
+  insert into @employeetable
+  select eid,fname,dateofreg from employeetable where year(dateofreg)=@year
+  return
+  end
+
+  select * from fn_hireyear(1992)
+
+8.
+  create function fn_DepartmentMembers
+  (@deptno int)
+  returns @employeetable table
+  (eid int,employeename varchar(20),dept int)
+  as begin
+  insert into @employeetable
+  select eid,fname,salary from employeetable where dept=@deptno
+  return 
+  end
+
+  select * from fn_DepartmentMembers(20)
+
+9.
+  create function fn_TotalSal()
+  returns @employeetable table
+  (dept int,totalsalary int)
+  as begin
+  insert into @employeetable
+  select dept,sum(salary) from employeetable group by dept
+  return end
+  
+  select * from fn_TotalSal()
+
+10.
+  create function fn_SalandCom()
+  returns @employeetable table
+  (eid int,fname varchar(20),totalSal int)
+  as
+  begin
+  insert into @employeetable
+  select eid,fname,(case when commission !=null then salary+commission else salary end) from employeetable 
+  return
+  end
+
+  select * from fn_SalandCom()
