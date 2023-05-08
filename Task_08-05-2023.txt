@@ -1,0 +1,58 @@
+select * from Products
+  create table producttriggeraudit(id int identity,audit text);
+  select * from producttriggeraudit
+  
+  create trigger tr_insertion
+  on Products
+  for insert as begin declare @id int
+  select @id=productID
+  from inserted 
+  insert into producttriggeraudit
+  values('New product with id ='+cast(@id as varchar)+'is added at'+cast(getdate() as varchar))
+  end
+
+  insert into Products values(6,'Pav',30,5)
+
+  alter trigger tr_insertion
+  on Products
+  for delete as begin declare @id int
+  select @id=productID
+  from deleted 
+  insert into producttriggeraudit
+  values('product with id ='+cast(@id as varchar)+'is deleted at'+cast(getdate() as varchar))
+  end
+
+  delete from Products where productID=5
+
+alter trigger tr_insertion
+  on Products
+  for delete as begin 
+  declare @id int
+  declare @oldname varchar(20),@newname varchar(20)
+  declare @oldprice int,@newprice int
+  declare @oldquantity int,@newquantity int
+  declare @AuditText varchar(1000);
+  select * into #temptable from inserted
+  while(exists(select productID from #temptable))
+  begin
+  set @AuditText=' '
+  select top 1 @id=productID,@newname=name,@newprice=price,@newquantity=quantity from #temptable
+
+  select @oldname=ProductName,@oldprice=price,@oldquantity=Quantity from deleted where productID=@id
+
+  set @AuditText='Product with Id='+cast(@id as varchar)+'changed'
+  if (@oldname<> @newname )
+  set @AuditText=@AuditText+'product name from'+@oldname +' to '+@newname
+
+  if(@oldprice <>@newprice)
+  set @AuditText=@AuditText+'product price from'+cast(@oldprice  as varchar)+' to '+cast(@newprice as varchar)
+
+  if(@oldquantity <>@newquantity)
+  set @AuditText=@AuditText+'product quantity from'+cast(@oldquantity  as varchar)+' to '+cast(@newquantity as varchar)
+
+  insert into producttriggeraudit values (@AuditText)
+  delete from #temptable where productId=@id
+  end
+  end
+
+  update Products set price=20 where ProductName='Chai'
