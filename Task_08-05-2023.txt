@@ -26,7 +26,7 @@ select * from Products
 
 alter trigger tr_insertion
   on Products
-  for delete as begin 
+  for update as begin 
   declare @id int
   declare @oldname varchar(20),@newname varchar(20)
   declare @oldprice int,@newprice int
