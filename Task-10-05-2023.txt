@@ -1,0 +1,81 @@
+create table contacts(id int,first_name varchar(20),last_name varchar(20),email varchar(35))
+  INSERT INTO contacts VALUES
+    (1,'Syed','Abbas','syed.abbas@example.com'),
+    (2,'Catherine','Abel','catherine.abel@example.com'),
+    (3,'Kim','Abercrombie','kim.abercrombie@example.com'),
+    (3,'Kim','Abercrombie','kim.abercrombie@example.com'),
+    (3,'Kim','Abercrombie','kim.abercrombie@example.com'),
+    (4,'Hazem','Abolrous','hazem.abolrous@example.com'),
+    (4,'Hazem','Abolrous','hazem.abolrous@example.com'),
+    (5,'Humberto','Acevedo','humberto.acevedo@example.com'),
+    (5,'Humberto','Acevedo','humberto.acevedo@example.com'),
+    (6,'Pilar','Ackerman','pilar.ackerman@example.com');
+1)
+
+begin tran
+	WITH cte AS (
+    SELECT 
+         
+        first_name, 
+        last_name, 
+        email, 
+        ROW_NUMBER() OVER (
+            PARTITION BY 
+                id
+            ORDER BY 
+                first_name, 
+                last_name, 
+                email
+        ) row_num
+     FROM 
+        contacts
+)
+DELETE FROM cte
+WHERE row_num > 1;
+
+rollback
+
+2)
+
+alter table contacts add row_num int identity;
+
+begin tran
+delete from contacts where row_num not in(select min(row_num) from contacts group by first_name,last_name)
+rollback
+
+alter table contacts drop column row_num
+
+3)
+drop table contacts
+create table contacts(id int,first_name varchar(20),last_name varchar(20),email varchar(35))
+  INSERT INTO contacts VALUES
+    (1,'Syed','Abbas','syed.abbas@example.com'),
+    (2,'Catherine','Abel','catherine.abel@example.com'),
+    (3,'Kim','Abercrombie','kim.abercrombie@example.com'),
+    (4,'Kim','Abercrombie','kim.abercrombie@example.com'),
+    (5,'Kim','Abercrombie','kim.abercrombie@example.com'),
+    (6,'Hazem','Abolrous','hazem.abolrous@example.com'),
+    (7,'Hazem','Abolrous','hazem.abolrous@example.com'),
+    (8,'Humberto','Acevedo','humberto.acevedo@example.com'),
+    (9,'Humberto','Acevedo','humberto.acevedo@example.com'),
+    (10,'Pilar','Ackerman','pilar.ackerman@example.com');
+begin tran
+delete from contacts where id in (select c2.id from contacts c1 join contacts c2 on c1.first_name=c2.first_name and c1.last_name=c2.last_name where c1.id<c2.id)
+rollback
+
+4)Max function
+
+begin tran
+delete from contacts where id not in(select max(id) from contacts group by first_name,last_name)
+rollback
+
+
+5)
+begin tran 
+delete from contacts where id in(select c1.id from contacts c1,contacts c2 where c1.first_name=c2.first_name and c1.last_name=c2.last_name and c1.email=c2.email and c1.id>c2.id)
+rollback
+
+6)Min function
+begin tran
+delete from contacts where id not in(select min(id) from contacts group by first_name,last_name)
+rollback
