@@ -1,0 +1,83 @@
+--function with temporary variable
+create function fn_temporary(@word varchar(15))
+returns varchar(50)
+as 
+begin
+    declare @tempvar varchar(10)
+    set @tempvar ='Hello'
+  
+   return concat(@tempvar,' ',@word)
+end
+
+select dbo.fn_temporary('Chaitra')
+
+--function within a stored procedure
+create function fn_TotalPrice(@price int,@num smallint)
+returns int
+as 
+begin
+   return @price*@num
+end
+
+
+alter procedure usp_Cost 
+@bookid varchar(10),
+@num smallint,
+@total int output
+as begin 
+declare @price int
+select @price=price from books where book_id=@bookid
+set @total=dbo.fn_TotalPrice(@price,@num)
+end
+
+
+declare @total int
+execute usp_Cost 'C0001',5,@total output
+print @total
+
+
+--stored procedure within a fucntion not possible
+create procedure usp_bookprice
+@bookprice int output
+as begin 
+select @bookprice=price from books where book_id='C0001'
+end
+
+declare @bookprice int
+execute usp_bookprice @bookprice output
+print @bookprice
+
+create function fn_TotalCost(@num int)
+returns int
+as begin
+declare @price int
+set @price=dbo.usp_bookprice
+return @price*@num
+end
+
+select dbo.fn_TotalCost(3)
+
+
+
+
+
+--joining table valued function with a base table
+alter function fn_discountedPrice(@RoomTypeId varchar(10))
+returns table as return
+select RoomTypeId,Price,(Price-(0.10*Price)) as discountedPrice from tbl_RoomDetails  where RoomTypeId=@RoomTypeId
+select * from fn_discountedPrice('RT4')
+
+select c.*,(r.Price*c.NumofRooms)as ActualPrice,(discountedPrice *c.NumofRooms) as DiscountedPrice from fn_discountedPrice('RT4') as  r join tbl_Customer as c on r.RoomTypeid=c.RoomType
+
+
+--instead of triggers on tables
+create table newcontacts(id int,first_name varchar(10),last_name varchar(10),email varchar(50),registered_date date)
+create trigger InsteadOfTrigger
+on newcontacts instead of insert as begin
+insert into newcontacts(id,first_name,last_name,email,registered_date)
+select id,first_name,last_name,email,getdate() from inserted
+end
+
+insert into newcontacts(id,first_name,last_name,email) values (11,'Shraddha','Kapoor','shrads@gmail.com')
+
+select * from newcontacts
