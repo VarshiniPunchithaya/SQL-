@@ -6,6 +6,21 @@ table tbl_RoomAvailabilityLog
 table tbl_Billing
 table tbl_BookingAudit
 table tbl_Ratings
+table tbl_AuditChanges
+table tbl_FoodDetails
+table tbl_HotelReview
+table tbl_RoomAllocation
+
+select * from tbl_RoomDetails  --SSIS From SQL to CSV
+select * from tbl_Customer  --SSIS From SQL to Excel
+select * from tbl_RoomAvailabilityLog
+select * from tbl_Billing
+select * from tbl_BookingAudit
+select * from tbl_Ratings
+select * from tbl_AuditChanges
+select * from tbl_HotelReview
+select * from tbl_FoodDetails
+select * from tbl_RoomAllocation
 
 create table tbl_RoomDetails(RoomTypeId varchar(10) primary key,
 RoomType varchar(10),
@@ -75,9 +90,6 @@ insert into tbl_Ratings values('user10',3.5)
 alter table tbl_Ratings alter column Rating numeric(5,1)
 
 
-
-
-exec sp_help tbl_Ratings
 alter procedure sp_CustomerBooking
 @CustomerId varchar(10),
 @FirstName varchar(30),
@@ -91,6 +103,12 @@ alter procedure sp_CustomerBooking
 @NumofRooms int,
 @RoomType varchar(10)
 as begin 
+
+declare @Booked int,@Total int,@RoomsAvailable int
+select @Booked=sum(NumofRooms) from tbl_Customer where CheckIn=@CheckIn and RoomType=@RoomType
+select @Total=TotalRooms from tbl_RoomDetails where RoomTypeId=@RoomType
+select @RoomsAvailable=@Total -@Booked
+
 if(@CheckOut<@CheckIn)
 begin
 raiserror('Date and time of checkout must be after the checkin time',16,1);
@@ -99,6 +117,12 @@ end
 else if((@Numofadults /@NumofRooms)>2)
 begin
 raiserror('Only 2 adults are allowed in a room, hence add a room',16,1);
+end
+
+
+else if(@NumofRooms>@RoomsAvailable)
+begin
+raiserror('Number exceeds the rooms available for the checkIn date',16,1);
 end
 
 else 
@@ -115,12 +139,12 @@ insert into tbl_Customer values(@CustomerId ,@FirstName ,@LastName ,@Contact ,
 commit tran
 
 begin
-declare @Booked int,@Total int,@RoomsAvailable int
-select @Booked=sum(NumofRooms) from tbl_Customer where CheckIn=@CheckIn and RoomType=@RoomType
-select @Total=TotalRooms from tbl_RoomDetails where RoomTypeId=@RoomType
-select @RoomsAvailable=@Total -@Booked
+declare @Book int,@All int,@RoomAvailable int
+select @Book=sum(NumofRooms) from tbl_Customer where CheckIn=@CheckIn and RoomType=@RoomType
+select @All=TotalRooms from tbl_RoomDetails where RoomTypeId=@RoomType
+select @RoomAvailable=@All -@Book
 begin tran
-insert into tbl_RoomAvailabilityLog values(@RoomType,@CheckIn,@NumofRooms,@Roomsavailable,@CustomerId)
+insert into tbl_RoomAvailabilityLog values(@RoomType,@CheckIn,@NumofRooms,@Roomavailable,@CustomerId)
 commit tran
 end
 
@@ -151,33 +175,55 @@ sp_CustomerBooking 'user8','Sunidhi' ,'Patwardhan',9764310825,'Bangalore','2023-
 sp_CustomerBooking 'user9','Arjun' ,'Shetty',1672948320,'Bangalore','2023-05-17 12:00:00','2023-05-18 12:00:00',2,0,1,'RT1' 
 sp_CustomerBooking 'user10','Athiya' ,'Shetty',1672948320,'Bangalore','2023-05-17 12:00:00','2023-05-17 12:00:00',6,0,3,'RT1' 
 sp_CustomerBooking 'user11','Swathi' ,'P',815236975,'Bangalore','2023-05-17 12:00:00','2023-05-18 12:00:00',5,1,3,'RT2' 
-sp_CustomerBooking '','','',,'','','',,,,''
+sp_CustomerBooking 'user12','Neha','Mayya',9539390657,'Mangalore','2023-05-13 12:00:00','2023-05-14 12:00:00',4,1,3,'RT3'
+sp_CustomerBooking 'user13','Sharanya' ,'P',815236938,'Mangalore','2023-05-15 12:00:00','2023-05-16 12:00:00',5,1,3,'RT2' 
+sp_CustomerBooking 'user14','Sneha' ,'Pai',810236975,'Bangalore','2023-05-14 12:00:00','2023-05-15 12:00:00',5,1,3,'RT2' 
+sp_CustomerBooking 'user15','Swara' ,'Rao',889236975,'Mangalore','2023-05-17 12:00:00','2023-05-18 12:00:00',5,1,3,'RT2' 
+
+delete from tbl_Customer where CustomerId='user14'
 
 
-select * from tbl_Customer
-select * from tbl_RoomAvailabilityLog
-select * from tbl_Billing
-select * from tbl_BookingAudit
-select * from tbl_Ratings
-select * from tbl_RoomDetails
+create table tbl_HotelReview(Review nvarchar, Rating tinyint)
+insert into tbl_HotelReview values ('nice hotel expensive parking got good deal stay hotel anniversary and arrived late evening took advice previous reviews did valet parking',4),
+('location excellent short stroll main downtown shopping area and pet friendly room showed no signs animal hair smells',3),
+('nice hotel but the staff quite rude',2),
+('Good decor with friendly staff',4),
+('Amazing stay with an amazing vuew from the hotel',5),
+('Great place to be with family, friends and pets',5),
+('Good rooms but the staff could have been more friendly',3),
+('Had an amazing time with my family for the stay',4),
+('Good amenities  provided be the swimming pool or food',4),
+('Nice place to be with family and good location to click pics',5)
 
-alter procedure usp_Availability
+--SSIS (From Excel To SQL)
+create table tbl_FoodDetails(CustomerId varchar(10),Breakfast varchar(5),Lunch varchar(5),Dinner varchar(5))
+
+
+create procedure usp_Booked
 as begin
-select CheckIn,RoomType,sum(NumofRooms) as booked from tbl_Customer group by CheckIn,RoomType order by CheckIn,RoomType
+select CheckIn,RoomType,sum(NumofRooms) as booked 
+from tbl_Customer 
+group by CheckIn,RoomType 
+order by CheckIn,RoomType
 end
-usp_Availability
+usp_Booked
 
 alter procedure usp_Ratings(@RoomType varchar(10))
-as begin select Roomtype,avg(Rating) as Average_Ratings from tbl_Ratings as r join tbl_Customer as c on r.userid=c.CustomerId  group by RoomType having RoomType=@RoomType
+as begin select Roomtype,avg(Rating) as Average_Ratings 
+from tbl_Ratings as r join tbl_Customer as c on r.userid=c.CustomerId  
+group by RoomType 
+having RoomType=@RoomType
 end
-usp_Ratings 'RT2'
+usp_Ratings 'RT3'
 
 alter trigger tr_CustomerInsert
 on tbl_Customer for insert as 
 begin
 declare @userid varchar(5),@rooms int,@roomtype varchar(20),@numrooms int,@checkin smalldatetime,@checkout smalldatetime
-select @userid=CustomerId,@rooms=NumofRooms,@checkin=CheckIn,@checkout=CheckOut,@roomtype=r.RoomType from inserted as i join tbl_RoomDetails as r on i.RoomType=r.RoomTypeId
-insert into tbl_BookingAudit  values('User with id '+cast(@userid as varchar)+' has booked '+cast(@rooms as varchar)+@roomtype+' rooms  '+cast(@checkin as varchar)+' to '+cast(@checkout as varchar))
+select @userid=CustomerId,@rooms=NumofRooms,@checkin=CheckIn,@checkout=CheckOut,@roomtype=r.RoomType 
+from inserted as i 
+join tbl_RoomDetails as r on i.RoomType=r.RoomTypeId
+insert into tbl_BookingAudit values('User with id '+cast(@userid as varchar)+' has booked '+cast(@rooms as varchar)+@roomtype+' rooms  '+cast(@checkin as varchar)+' to '+cast(@checkout as varchar))
 end
 
 create trigger tr_InsertCompletion
@@ -251,3 +297,250 @@ delete  tbl_Billing
 delete  tbl_BookingAudit
 delete tbl_RoomAvailabilityLog
 delete tbl_Ratings
+delete from tbl_HotelReview
+delete from tbl_FoodDetails
+
+
+create table tbl_AuditChanges(
+DatabaseName varchar(20),
+TableName varchar(20),
+EventType varchar(20),
+LoginName varchar(20),
+SqlCommand varchar(2000),
+AuditDateTime datetime);
+
+create trigger tr_ForTableChanges
+on database
+for create_table,alter_table,drop_table,rename
+as
+begin
+declare  @EventData xml
+select @EventData=eventdata();
+insert into HotelManagement.dbo.tbl_AuditChanges(DatabaseName ,TableName ,EventType ,LoginName ,SqlCommand ,AuditDateTime ) values
+(@EventData.value('(/EVENT_INSTANCE/DatabaseName)[1]', 'varchar(20)'),
+@EventData.value('(/EVENT_INSTANCE/ObjectName)[1]', 'varchar(20)'),
+@EventData.value('(/EVENT_INSTANCE/EventType)[1]', 'varchar(20)'),
+@EventData.value('(/EVENT_INSTANCE/LoginName)[1]', 'varchar(20)'),
+@EventData.value('(/EVENT_INSTANCE/TSQLCommand/CommandText)[1]', 'varchar(2000)'), getdate())
+end
+exec sp_rename 'tbl_RoomAvailabilityLog.NumofBookedRooms', 'NumofRoomsBooked'
+
+create view vw_Amenities
+as select fd.CustomerId,rd.RoomType,Breakfast,Lunch,Dinner from tbl_FoodDetails as fd 
+join tbl_Customer as c on fd.CustomerId=c.CustomerId 
+join tbl_RoomDetails as rd on c.RoomType=rd.RoomTypeId
+select * from vw_Amenities
+
+create view vw_RatingDetails
+as
+select UserId,rd.RoomType,Rating from tbl_Customer as c 
+join tbl_Ratings as r on c.CustomerId=r.UserId 
+join tbl_RoomDetails as rd on c.RoomType=rd.RoomTypeId
+select * from vw_RatingDetails
+
+
+--View to find the details of the most valued customer
+alter view vw_MostValuableCustomer
+as select RoomType,max(NumOfRoomsBooked) as MaxRoom from tbl_RoomAvailabilityLog group by RoomType
+select m.*,CustomerId,concat(FirstName,' ',LastName) as CustomerName 
+from vw_MostValuableCustomer as m 
+join tbl_Customer as c on m.RoomType=c.RoomType and m.MaxRoom=c.NumofRooms
+select * from vw_MostValuableCustomer
+
+create function fn_discounts()
+returns @tblCustomer table
+(CustomerId varchar(10),RoomType varchar(10),Discount varchar(10))
+as begin
+insert into @tblCustomer
+select CustomerId,RoomType,case when NumofRooms>5 then  'Yes' else 'No' end as Discount 
+from tbl_Customer
+return 
+end
+select * from fn_discounts()
+
+create function fn_availability(@RoomType varchar(10),@CheckIn smalldatetime,@NumRooms smallint)
+returns @tblAvailability table
+(RoomType varchar(10),NumRooms smallint,AvailabilityStatus varchar(10))
+as begin
+insert into @tblAvailability
+select RoomType,@NumRooms,case when @NumRooms<NumofRoomsAvailable then 'Yes' else 'No' end as AvailabilityStatus 
+from tbl_RoomAvailabilityLog 
+where  RoomType=@RoomType and CheckIn=@CheckIn
+return
+end
+select * from tbl_RoomAvailabilityLog
+exec sp_help tbl_RoomAvailabilityLog
+select * from fn_availability('RT4','2023-05-16 12:00:00',3)
+
+
+--function to review the hotel rating
+alter function fn_RatingReview(@Rating int)
+returns table as return
+select Review from tbl_HotelReview  where Rating=@Rating 
+select * from fn_RatingReview(2)
+
+--BriefPaymentDetails
+create function fn_PaymentDescription(@id varchar(10))
+returns table as return 
+select concat(FirstName,' ',LastName) as CustomerName,b.RoomType,r.RoomType as RoomName,b.NumofRooms,CheckIn,NumofAdults,Price as PricePerRoom,TotalPrice 
+from tbl_Customer as c 
+join tbl_Billing as b on c.CustomerId=b.CustomerId 
+join tbl_RoomDetails as r on r.RoomTypeId=b.RoomType
+where c.CustomerId=@id
+select * from fn_PaymentDescription('user2')
+
+select * from tbl_Billing
+
+--CommonTableExpressions(cte)
+
+with cte_RoomCheckInArrangement as
+(select CustomerId,FirstName,r.RoomType,CheckIn,ROW_NUMBER() over (partition by CheckIn order by CheckIn,c.RoomType) as CustomersCheckedInOnEachDate
+from tbl_Customer as c 
+join tbl_RoomDetails as r on r.RoomTypeId=c.RoomType)
+select * from cte_RoomCheckInArrangement
+
+with cte_BookedRooms as
+(select r.RoomType as RoomName,c.RoomType,count(c.RoomType) as RoomBooked 
+from tbl_Customer as c 
+join tbl_RoomDetails as r on r.RoomTypeId=c.RoomType 
+group by r.RoomType,c.RoomType)
+select RoomBooked from cte_BookedRooms where RoomName='Suite'
+
+with cte_UpdateKidDetails as
+(select c.*,r.RoomType as RoomName from tbl_Customer as c 
+join tbl_RoomDetails as r on r.RoomTypeId=c.RoomType)
+update cte_UpdateKidDetails set NumofKids=3 where CustomerId='user10'
+
+with cte_BriefPaymentDetails as
+(select concat(FirstName,' ',LastName) as CustomerName,b.RoomType,r.RoomType as RoomName,b.NumofRooms,CheckIn,NumofAdults,Price as PricePerRoom,TotalPrice 
+from tbl_Customer as c 
+join tbl_Billing as b on c.CustomerId=b.CustomerId 
+join tbl_RoomDetails as r on r.RoomTypeId=b.RoomType)
+select * from cte_BriefPaymentDetails
+
+
+--Recursive CTE
+with cte_RoomCheckInArrangement(CustomerId,FirstName,RoomType,CheckIn,Level) as
+(select CustomerId,FirstName,r.RoomType,CheckIn,1 as Level
+from tbl_Customer as c 
+join tbl_RoomDetails as r on r.RoomTypeId=c.RoomType 
+where CheckIn in (select min(CheckIn) from tbl_Customer)
+union all
+select c.CustomerId,c.FirstName,r.RoomType,c.CheckIn,rc.Level+1 as Level
+from tbl_Customer as c 
+join tbl_RoomDetails as r on r.RoomTypeId=c.RoomType 
+join cte_RoomCheckInArrangement as rc on  c.CheckIn=rc.CheckIn+1 
+
+)
+select distinct CustomerId,FirstName,RoomType,CheckIn,[Level] from cte_RoomCheckInArrangement order by Level
+
+dense_rank() over(order by CheckIn)
+
+--Table Type
+create type ut_RoomDetails as table 
+(
+RoomTypeId varchar(10) ,
+RoomType varchar(10),
+Price numeric(10,2),
+TotalRooms tinyint
+)
+
+alter procedure usp_InsertRoomDetails(@RoomDetails [ut_RoomDetails] ReadOnly)
+as
+begin
+insert into dbo.tbl_RoomDetails
+(
+RoomTypeId,
+RoomType,
+Price,
+TotalRooms
+)
+select * from @RoomDetails
+end
+
+declare @Detail as [ut_RoomDetails];
+insert into @Detail
+select 'RT5','HomeStay',50000,2 union
+select 'RT6','Villa',75000,1
+exec dbo.usp_InsertRoomDetails @Detail
+
+select * from tbl_RoomDetails
+
+
+--Recursive cte stored procedure
+
+create table tbl_RoomAllocation(CheckIn smalldatetime,RoomType varchar(10),TotalRoom tinyint,RoomsAllocatedforCheckInAndRoomType varchar(100))
+
+select * from tbl_RoomAllocation
+select * from tbl_RoomAvailabilityLog
+
+alter procedure usp_RecursiveRoomAllocation
+@CheckIn smalldatetime,
+@RoomType varchar(10),
+@Number tinyint,
+@i tinyint,
+@AllocatedRooms varchar(100) output
+as
+begin
+if(@Number!=0)
+begin
+
+if (@i=@Number)
+begin
+set @AllocatedRooms=isnull(@AllocatedRooms,' ')+@RoomType+'Room'+cast(@i as varchar);
+exec usp_RoomAllocationBasedOnCheckIn @CheckIn,@RoomType,@AllocatedRooms output;
+end
+
+else
+begin
+set @AllocatedRooms=isnull(@AllocatedRooms,' ')+@RoomType+'Room'+cast(@i as varchar);
+exec usp_RoomAllocationBasedOnCheckIn @CheckIn,@RoomType,@AllocatedRooms output;
+declare @newi int=@i+1
+exec usp_RecursiveRoomAllocation @CheckIn,@RoomType,@Number,@newi,@AllocatedRooms OUTPUT;
+end
+end
+else
+raiserror('No rooms have been booked',16,1)
+while(@Number=0)
+begin
+break;
+end
+
+end
+
+
+
+declare @AllocatedRooms varchar(max)
+declare @num tinyint
+select @num=sum(NumofRoomsBooked) 
+from tbl_RoomAvailabilityLog 
+where Checkin='2023-05-16 12:00:00' and RoomType='RT3'
+EXEC usp_RecursiveRoomAllocation '2023-05-16 12:00:00','RT3',@num,1,@AllocatedRooms output
+select * from tbl_RoomAllocation
+select * from tbl_RoomAvailabilityLog
+
+select @AllocatedRooms as RoomsAllocated
+
+alter procedure usp_RoomAllocationBasedOnCheckIn
+@CheckIn smalldatetime,
+@RoomType varchar(10),
+@AllocatedRooms varchar(max) output
+as begin
+declare @TotalRooms tinyint
+select @TotalRooms=sum(NumofRoomsBooked) from tbl_RoomAvailabilityLog where CheckIn=@CheckIn and RoomType=@RoomType
+IF not EXISTS (SELECT 0 FROM tbl_RoomAllocation WHERE CheckIn=@CheckIn and RoomType=@RoomType )
+    BEGIN
+	begin tran
+     INSERT INTO tbl_RoomAllocation VALUES (@CheckIn,@RoomType,@TotalRooms,@AllocatedRooms);   
+	commit tran
+    END
+    ELSE
+    BEGIN
+	begin tran
+	UPDATE tbl_RoomAllocation
+        SET RoomsAllocatedforCheckInAndRoomType=@AllocatedRooms,TotalRoom=@TotalRooms
+		WHERE CheckIn = @CheckIn and RoomType=@RoomType ;
+        
+	commit tran
+    END
+END
