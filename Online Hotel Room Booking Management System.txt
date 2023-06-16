@@ -1,3 +1,5 @@
+
+
 create database HotelManagement
 
 table tbl_RoomDetails
@@ -164,6 +166,35 @@ rollback tran
 end catch
 end
 
+alter procedure  usp_FoodCost 
+@CustomerId varchar(10)
+as begin
+declare @Breakfast varchar(10),@Lunch varchar(10),@Dinner varchar(10)
+select @Breakfast=Breakfast from tbl_FoodDetails where CustomerId=@CustomerId
+select @Lunch=Lunch  from tbl_FoodDetails where CustomerId=@CustomerId
+select @Dinner=Dinner from tbl_FoodDetails where CustomerId=@CustomerId
+declare @NumofPeople smallint
+select @NumofPeople=(NumofAdults+NumofKids) from tbl_Customer where CustomerId=@CustomerId
+declare @Cost smallint=0
+if(@Breakfast='Yes')
+begin
+select @Cost=@Cost+(250*@NumofPeople)
+end
+if(@Lunch='Yes')
+begin
+select @Cost=@Cost+(250*@NumofPeople)
+end
+if(@Dinner='Yes')
+begin
+select @Cost=@Cost+(250*@NumofPeople)
+end
+print @Cost
+end
+
+usp_FoodCost user1
+
+
+
 sp_CustomerBooking 'user1','Bhoomika','Hegde',9539390628,'Mangalore','2023-05-11 12:00:00','2023-05-12 12:00:00',2,0,1,'RT4'
 sp_CustomerBooking 'user2','Adithi','Shetty',9539264260,'Bangalore','2023-05-11 12:00:00','2023-05-12 12:00:00',2,1,1,'RT2'
 sp_CustomerBooking 'user3','Neha','Shetty',9524684290,'Bangalore','2023-05-12 12:00:00','2023-05-13 12:00:00',2,1,1,'RT2'
@@ -209,7 +240,7 @@ end
 usp_Booked
 
 alter procedure usp_Ratings(@RoomType varchar(10))
-as begin select Roomtype,avg(Rating) as Average_Ratings 
+as begin select Roomtype,cast(avg(Rating) as numeric(10,1)) as Average_Ratings 
 from tbl_Ratings as r join tbl_Customer as c on r.userid=c.CustomerId  
 group by RoomType 
 having RoomType=@RoomType
@@ -308,6 +339,7 @@ EventType varchar(20),
 LoginName varchar(20),
 SqlCommand varchar(2000),
 AuditDateTime datetime);
+select * from tbl_AuditChanges
 
 create trigger tr_ForTableChanges
 on database
@@ -342,10 +374,11 @@ select * from vw_RatingDetails
 --View to find the details of the most valued customer
 alter view vw_MostValuableCustomer
 as select RoomType,max(NumOfRoomsBooked) as MaxRoom from tbl_RoomAvailabilityLog group by RoomType
+
 select m.*,CustomerId,concat(FirstName,' ',LastName) as CustomerName 
 from vw_MostValuableCustomer as m 
 join tbl_Customer as c on m.RoomType=c.RoomType and m.MaxRoom=c.NumofRooms
-select * from vw_MostValuableCustomer
+
 
 create function fn_discounts()
 returns @tblCustomer table
@@ -372,6 +405,39 @@ select * from tbl_RoomAvailabilityLog
 exec sp_help tbl_RoomAvailabilityLog
 select * from fn_availability('RT4','2023-05-16 12:00:00',3)
 
+alter function fn_FoodCost(@CustomerId varchar(10))
+returns smallint
+as begin
+declare @Breakfast varchar(10),@Lunch varchar(10),@Dinner varchar(10)
+select @Breakfast=Breakfast from tbl_FoodDetails where CustomerId=@CustomerId
+select @Lunch=Lunch  from tbl_FoodDetails where CustomerId=@CustomerId
+select @Dinner=Dinner from tbl_FoodDetails where CustomerId=@CustomerId
+declare @NumofPeople smallint
+select @NumofPeople=(NumofAdults+NumofKids) from tbl_Customer where CustomerId=@CustomerId
+declare @Cost smallint
+set @Cost=0
+if (@Breakfast='Yes')  
+set @Cost=@Cost+(250*@NumofPeople)
+if (@Lunch='Yes') 
+set @Cost=@Cost+(250*@NumofPeople)
+if (@Dinner='Yes') 
+set @Cost=@Cost+(250*@NumofPeople)
+return @Cost
+end
+select dbo.fn_FoodCost('user1') as TotalCost
+
+
+--BriefPaymentDetails
+alter function fn_PaymentDescription(@id varchar(10))
+returns table as return 
+select concat(FirstName,' ',LastName) as CustomerName,b.RoomType,r.RoomType as RoomName,b.NumofRooms,CheckIn,NumofAdults,NumofKids,Price as PricePerRoom,dbo.fn_FoodCost(@id) as FoodCost,(TotalPrice+dbo.fn_FoodCost(@id)) as TotalPrice
+from tbl_Customer as c 
+join tbl_Billing as b on c.CustomerId=b.CustomerId 
+join tbl_RoomDetails as r on r.RoomTypeId=b.RoomType
+where c.CustomerId=@id
+select * from fn_PaymentDescription('user1')
+
+select * from tbl_Billing
 
 --function to review the hotel rating
 alter function fn_RatingReview(@Rating int)
@@ -379,25 +445,13 @@ returns table as return
 select Review from tbl_HotelReview  where Rating=@Rating 
 select * from fn_RatingReview(2)
 
---BriefPaymentDetails
-create function fn_PaymentDescription(@id varchar(10))
-returns table as return 
-select concat(FirstName,' ',LastName) as CustomerName,b.RoomType,r.RoomType as RoomName,b.NumofRooms,CheckIn,NumofAdults,Price as PricePerRoom,TotalPrice 
-from tbl_Customer as c 
-join tbl_Billing as b on c.CustomerId=b.CustomerId 
-join tbl_RoomDetails as r on r.RoomTypeId=b.RoomType
-where c.CustomerId=@id
-select * from fn_PaymentDescription('user2')
-
-select * from tbl_Billing
-
 --CommonTableExpressions(cte)
 
-with cte_RoomCheckInArrangement as
+with cte_RoomCheckInBasedOnRoomType as
 (select CustomerId,FirstName,r.RoomType,CheckIn,ROW_NUMBER() over (partition by CheckIn order by CheckIn,c.RoomType) as CustomersCheckedInOnEachDate
 from tbl_Customer as c 
 join tbl_RoomDetails as r on r.RoomTypeId=c.RoomType)
-select * from cte_RoomCheckInArrangement
+select * from cte_RoomCheckInBasedOnRoomType
 
 with cte_BookedRooms as
 (select r.RoomType as RoomName,c.RoomType,count(c.RoomType) as RoomBooked 
@@ -410,6 +464,7 @@ with cte_UpdateKidDetails as
 (select c.*,r.RoomType as RoomName from tbl_Customer as c 
 join tbl_RoomDetails as r on r.RoomTypeId=c.RoomType)
 update cte_UpdateKidDetails set NumofKids=3 where CustomerId='user10'
+select * from tbl_Customer
 
 with cte_BriefPaymentDetails as
 (select concat(FirstName,' ',LastName) as CustomerName,b.RoomType,r.RoomType as RoomName,b.NumofRooms,CheckIn,NumofAdults,Price as PricePerRoom,TotalPrice 
@@ -420,7 +475,7 @@ select * from cte_BriefPaymentDetails
 
 
 --Recursive CTE
-with cte_RoomCheckInArrangement(CustomerId,FirstName,RoomType,CheckIn,Level) as
+with cte_RoomCheckInBasedOnCheckIandRoomType(CustomerId,FirstName,RoomType,CheckIn,Level) as
 (select CustomerId,FirstName,r.RoomType,CheckIn,1 as Level
 from tbl_Customer as c 
 join tbl_RoomDetails as r on r.RoomTypeId=c.RoomType 
@@ -429,12 +484,12 @@ union all
 select c.CustomerId,c.FirstName,r.RoomType,c.CheckIn,rc.Level+1 as Level
 from tbl_Customer as c 
 join tbl_RoomDetails as r on r.RoomTypeId=c.RoomType 
-join cte_RoomCheckInArrangement as rc on  c.CheckIn=rc.CheckIn+1 
+join cte_RoomCheckInBasedOnCheckIandRoomType as rc on  c.CheckIn=rc.CheckIn+1 
 
 )
-select distinct CustomerId,FirstName,RoomType,CheckIn,[Level] from cte_RoomCheckInArrangement order by Level
+select distinct CustomerId,FirstName,RoomType,CheckIn,[Level] from cte_RoomCheckInBasedOnCheckIandRoomType order by Level
 
-dense_rank() over(order by CheckIn)
+select distinct CustomerId,FirstName,RoomType,CheckIn,dense_rank() over(order by CheckIn) from cte_RoomCheckInBasedOnCheckIandRoomType
 
 --Table Type
 create type ut_RoomDetails as table 
@@ -508,14 +563,14 @@ end
 
 end
 
-
-
 declare @AllocatedRooms varchar(max)
 declare @num tinyint
 select @num=sum(NumofRoomsBooked) 
 from tbl_RoomAvailabilityLog 
 where Checkin='2023-05-16 12:00:00' and RoomType='RT3'
 EXEC usp_RecursiveRoomAllocation '2023-05-16 12:00:00','RT3',@num,1,@AllocatedRooms output
+
+
 select * from tbl_RoomAllocation
 select * from tbl_RoomAvailabilityLog
 
